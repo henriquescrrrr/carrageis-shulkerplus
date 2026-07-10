@@ -1,0 +1,10 @@
+# ShulkerPlus - English (en_US)
+prefix: '<gradient:#b48cf2:#8c5ef2>ShulkerPlus</gradient> <dark_gray>»</dark_gray> '
+in-combat: '<red>⚠ You cannot open shulkers while in combat.</red>'
+stacked: '<red>⚠ You can only open shulkers one at a time (stack of 1).</red>'
+no-nesting: '<red>⚠ You cannot put shulkers inside shulkers.</red>'
+no-dream-items: '<red>⚠ BuildersDream items cannot go inside shulkers.</red>'
+already-open: '<red>⚠ You already have a shulker open.</red>'
+no-permission: '<red>⚠ No permission.</red>'
+reloaded: '<green>✔ ShulkerPlus reloaded.</green>'
+version: '<gray>v{version}</gray>'

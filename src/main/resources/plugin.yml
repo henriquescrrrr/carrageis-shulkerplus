@@ -1,0 +1,26 @@
+name: ShulkerPlus
+version: '${project.version}'
+main: pt.henrique.shulkerplus.ShulkerPlus
+api-version: '1.21'
+description: Open shulker boxes from your hand, dupe-safe
+authors:
+  - henrique
+softdepend:
+  - CombatLOG
+  - BuildersDream
+  - PlayerSettings
+
+commands:
+  shulkerplus:
+    description: ShulkerPlus main command
+    usage: /shulkerplus <reload|version>
+    aliases:
+      - sp+
+
+permissions:
+  shulkerplus.use:
+    description: Allows opening shulker boxes from the hand
+    default: true
+  shulkerplus.admin:
+    description: Allows reloading the plugin
+    default: op

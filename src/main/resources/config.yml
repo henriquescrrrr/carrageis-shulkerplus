@@ -1,0 +1,15 @@
+# ─── ShulkerPlus ───
+# Abrir shulker boxes diretamente da mão (sneak + botão direito no ar).
+
+# Idioma das mensagens: pt_PT ou en_US (ver a pasta lang/). Com o PlayerSettings
+# instalado, cada jogador vê o seu próprio idioma; caso contrário usa-se este.
+locale: pt_PT
+
+# Exigir estar agachado para abrir (evita aberturas acidentais ao colocar blocos)
+require-sneak: true
+
+# Sons de abrir/fechar
+play-sounds: true
+
+# Permitir abrir shulkers durante combate (CombatLOG)
+allow-in-combat: false
