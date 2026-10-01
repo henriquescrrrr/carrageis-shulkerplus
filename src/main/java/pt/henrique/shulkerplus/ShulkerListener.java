@@ -3,6 +3,7 @@ package pt.henrique.shulkerplus;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.Tag;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -28,6 +29,15 @@ import org.bukkit.inventory.meta.BlockStateMeta;
  * Opens held shulkers and enforces the dupe-safety rules while one is open:
  * the source item cannot move, shulkers cannot nest, BuildersDream dream
  * items cannot enter, and the contents are written back exactly once.
+ * <p>
+ * The GUI is a plain 27-slot inventory, so it has none of the slot rules a real
+ * shulker menu has. The no-nesting check below reproduces vanilla's:
+ * {@code ShulkerBoxSlot.mayPlace} is {@code Item.canFitInsideContainerItems()},
+ * which is false only for shulker box items. Bundles and a loaded
+ * {@code SULFUR_CUBE_BUCKET} go into a placed shulker box in vanilla, so they go
+ * in here too; refusing them would make the hand GUI stricter than the block it
+ * stands in for. The dream-item rule is this plugin's own, not vanilla's, and it
+ * applies to the payload as well as to the item itself.
  */
 public final class ShulkerListener implements Listener {
 
@@ -77,7 +87,8 @@ public final class ShulkerListener implements Listener {
             player.sendMessage(plugin.getLang().get(player, "in-combat"));
             return;
         }
-        if (!(item.getItemMeta() instanceof BlockStateMeta)) {
+        // ShulkerSession casts both of these without checking; gate them here.
+        if (!(item.getItemMeta() instanceof BlockStateMeta bsm) || !(bsm.getBlockState() instanceof ShulkerBox)) {
             return;
         }
 
@@ -141,7 +152,7 @@ public final class ShulkerListener implements Listener {
         if (Tag.SHULKER_BOXES.isTagged(incoming.getType())) {
             event.setCancelled(true);
             player.sendMessage(plugin.getLang().get(player, "no-nesting"));
-        } else if (isDreamItem(incoming)) {
+        } else if (carriesDreamItem(incoming)) {
             event.setCancelled(true);
             player.sendMessage(plugin.getLang().get(player, "no-dream-items"));
         }
@@ -157,7 +168,7 @@ public final class ShulkerListener implements Listener {
                 .anyMatch(raw -> raw >= 27 && event.getView().convertSlot(raw) == session.getSourceSlot());
         ItemStack dragged = event.getOldCursor();
         if (touchesSource
-                || (touchesTop && (Tag.SHULKER_BOXES.isTagged(dragged.getType()) || isDreamItem(dragged)))) {
+                || (touchesTop && (Tag.SHULKER_BOXES.isTagged(dragged.getType()) || carriesDreamItem(dragged)))) {
             event.setCancelled(true);
         }
     }
@@ -218,7 +229,15 @@ public final class ShulkerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    /**
+     * LOWEST, not MONITOR. While a session is open the items exist twice: in the GUI
+     * and still inside the source box, which only the write-back reconciles. Any death
+     * handler that snapshots the drops list or the player inventory before that
+     * reconciliation copies the stale box, so the player keeps whatever they pulled out
+     * of the GUI and gets it again from the box. DeathChest reads the inventory at HIGH,
+     * so this has to run first.
+     */
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onDeath(PlayerDeathEvent event) {
         ShulkerSession session = plugin.getSessions().remove(event.getEntity().getUniqueId());
         if (session != null) {
@@ -252,6 +271,23 @@ public final class ShulkerListener implements Listener {
     private static boolean isDreamItem(ItemStack item) {
         return DREAM_ITEM_KEY != null && item.hasItemMeta()
                 && item.getItemMeta().getPersistentDataContainer().getKeys().contains(DREAM_ITEM_KEY);
+    }
+
+    /**
+     * True if the item is a dream item or carries one. A shulker box cannot enter at all,
+     * but a bundle or a loaded {@code SULFUR_CUBE_BUCKET} can, and either would carry a
+     * dream item past the top-level check into a box that outlives the creative service.
+     */
+    private static boolean carriesDreamItem(ItemStack item) {
+        if (isDreamItem(item)) {
+            return true;
+        }
+        for (ItemStack nested : ContainerItemUtil.flattenPayload(item)) {
+            if (isDreamItem(nested)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void playSound(Player player, Sound sound) {

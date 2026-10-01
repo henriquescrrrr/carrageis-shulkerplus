@@ -1,7 +1,7 @@
 name: ShulkerPlus
 version: '${project.version}'
 main: pt.henrique.shulkerplus.ShulkerPlus
-api-version: '1.21'
+api-version: "26.3"
 description: Open shulker boxes from your hand, dupe-safe
 authors:
   - henrique
